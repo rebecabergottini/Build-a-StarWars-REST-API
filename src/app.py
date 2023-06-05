@@ -52,8 +52,18 @@ def handle_hello():
 # solicitud de un solo usuario
 @app.route('/user/<int:user_id>', methods=['GET'])
 def get_one_user(user_id):
-    user = User.query.get(user_id)
-    return jsonify(user.serialize()), 200
+    user = User.query.filter_by(id=user_id).first()
+
+    if user is None:
+        return jsonify({"msg":"User does not exist"}), 404
+    
+
+    response_body = {
+        "result": user.serialize()
+    }
+
+    return jsonify(response_body), 200
+
 
 
 #  Listar todos los registros de people en la base de datos
@@ -67,12 +77,21 @@ def get_people():
 
     return jsonify(response_people), 200
 
-#   Listar la información de una sola people
+
+
+# Listar la información de una sola people
 @app.route('/people/<int:people_id>', methods=['GET'])
 def get_one_people(people_id):
-    character = People.query.get(people_id)
-    oneCharacter = character.serialize()
-    return jsonify(oneCharacter), 200
+    one_character = People.query.filter_by(id=people_id).first()
+
+    if one_character is None:
+        return jsonify({"msg":"Character does not exist"}), 404
+
+    response_body = {
+        "result": one_character.serialize()
+    }
+
+    return jsonify(response_body), 200
 
 
 #  Listar los registros de planets en la base de datos
@@ -89,10 +108,16 @@ def get_planet():
 #  Listar la información de un solo planet
 @app.route('/planet/<int:planet_id>', methods=['GET'])
 def get_one_planet(planet_id):
-    planet = Planet.query.get(planet_id)
-    onePlanet = planet.serialize()
-    return jsonify(onePlanet), 200
+    one_planet = Planet.query.filter_by(id=planet_id).first()
 
+    if one_planet is None:
+        return jsonify({"msg":"Planet does not exist"}), 404
+
+    response_body = {
+        "result": one_planet.serialize()
+    }
+
+    return jsonify(response_body), 200
 
 #  Listar todos los favoritos que pertenecen al usuario actual.
 @app.route('/favoritesUser', methods=['GET'])
@@ -111,25 +136,38 @@ def get_favorites_users():
 @app.route('/FavoritesPeople/<int:people_id>', methods=['POST'])
 def add_favorite_people(people_id):
     request_body = request.json
-    favorites_people = FavoritesPeople(user_id=request_body["user_id"],name=request_body["name"])
+    user_id = request_body.get("user_id")
+    name = request_body.get("name")
+
+    if not user_id or not name:
+        return jsonify({"msg": "Missing required fields"}), 400
+
+    favorites_people = FavoritesPeople(user_id=user_id, name=name)
     db.session.add(favorites_people)
     db.session.commit()
 
     response = {
-        "msg": "Favourite character successfully created"
+        "msg": "Favorite character successfully created"
     }
     return jsonify(response), 200
 
 #   Añade un nuevo planeta favorito al usuario actual con el people = people_id.
 @app.route('/FavoritesPlanets/<int:planet_id>', methods=['POST'])
 def add_favorite_planet(planet_id):
+
     request_body = request.json
-    favorites_planet = FavoritesPlanets(user_id=request_body["user_id"],name=request_body["name"])
+    user_id = request_body.get("user_id")
+    name = request_body.get("name")
+
+    if not user_id or not name:
+        return jsonify({"msg": "Missing required fields"}), 400
+
+    favorites_planet = FavoritesPlanets(user_id=user_id, name=name)
     db.session.add(favorites_planet)
     db.session.commit()
 
     response = {
-        "msg": "Favourite planet successfully created"
+        "msg": "Favorite planet successfully created"
     }
     return jsonify(response), 200
 
